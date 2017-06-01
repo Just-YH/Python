@@ -1,0 +1,8 @@
+Programs for Python 2 and Python 3
+
+Note:
+In FindingPalidrome for Python 2 used decode to "utf-8" for checking russian phrases in PyCharm
+
+Major differences between codes for Python 2 and 3 is:
+FindingPalindrome - added function
+PurchaseMoneyCalculation - used regular expression for define a price
