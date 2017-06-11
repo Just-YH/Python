@@ -1,6 +1,7 @@
 import re
 import math
 import sys
+import json
 
 def mul(a, b):
     return a*b
@@ -19,6 +20,20 @@ def div(a, b):
 def add(a, b):
     return a+b
 
+
+def degree(a,b):
+    return a**b
+
+
+def wholepart(a,b):
+    return a//b
+
+
+def fraction(a,b):
+    return a%b
+
+
+data = [{'expression':'result'}]
 #math.sqrt(),abs(),math.log(),math.log10(),math.sin(),math.cos(),math.tan(),math.asin(),math.acos(),math.atan(),math.atan2(),math.hypot()
 
 # Read file and write infomation in list
@@ -62,13 +77,14 @@ for a in range(len(list_expr)):
 
 
 # Count */ in small brackets
-        for j in range(len(exp_brackets)):
-            if exp_brackets[j] == '*' or exp_brackets[j] == '/':
+        for j in range(len(exp_brackets)-1):
+            if exp_brackets[j] == '*' or exp_brackets[j] == '/' or (exp_brackets[j] == '/' and exp_brackets[j+1] == '/')\
+                    or exp_brackets[j] == '%' or exp_brackets[j] == '^':
                 count_mul_div = count_mul_div + 1
         print count_mul_div
 
 # FOR loop for functions in small bracket
-        res_functions = re.findall('(sqrt|abs|log|log10|sin|cos|tan|asin|acos|atan|atan2)([-+]?\d+[.]?\d*)', exp_brackets)
+        res_functions = re.findall('(sqrt|abs|log|log10|sin|cos|tan|asin|acos|atan)([-+]?\d+[.]?\d*)', exp_brackets)
 
         for i in range(len(res_functions)):
             if res_functions[i][0] == 'sqrt':
@@ -101,16 +117,13 @@ for a in range(len(list_expr)):
             elif res_functions[i][0] == 'atan':
                 exp_brackets = exp_brackets.replace(str(res_functions[i][0]) + str(res_functions[i][1]),
                                                 str(math.atan(float(res_functions[i][1]))))
-            elif res_functions[i][0] == 'atan2':
-                exp_brackets = exp_brackets.replace(str(res_functions[i][0]) + str(res_functions[i][1]),
-                                                str(math.atan2(float(res_functions[i][1]))))
 
             # FOR loop for */ in small bracket
         for k in range(count_mul_div):
-            res = re.search(r'[-+]?\d+[.]?\d*[*/][-+]?\d+[.]?\d*', exp_brackets)
+            res = re.search(r'[-+]?\d+[.]?\d*[*/%^][/]?[-+]?\d+[.]?\d*', exp_brackets)
             print "RES1: %s" % res.group()
-            symbols = re.split(r'[*/\s]', res.group())
-            digits = re.findall(r'[*/\s]', res.group())
+            symbols = re.split(r'[*/^%\s][/]?', res.group())
+            digits = re.findall(r'[*/^%\s][/]?', res.group())
             print symbols
             print digits
             if '*' in digits:
@@ -120,7 +133,10 @@ for a in range(len(list_expr)):
                 print product
                 exp_product = "%s*%s" % (symbols[digits.index("*")], symbols[digits.index("*") + 1])
                 print 'exp: '+ exp_product
-                exp_brackets= exp_brackets.replace(exp_product, str(product))
+                if ((factor1<0)&(factor2<0)):
+                    exp_brackets= exp_brackets.replace(exp_product, '+'+str(product))
+                else:
+                    exp_brackets = exp_brackets.replace(exp_product, str(product))
       #          print expression
             elif '/' in digits:
                 dividend = float(symbols[digits.index("/")])
@@ -128,7 +144,43 @@ for a in range(len(list_expr)):
                 quotient = div(dividend, divisor)
                 print quotient
                 exp_quotient = "%s/%s" % (symbols[digits.index("/")], symbols[digits.index("/") + 1])
-                exp_brackets = exp_brackets.replace(exp_quotient, str(quotient))
+                if ((dividend<0)&(divisor<0)):
+                    exp_brackets= exp_brackets.replace(exp_quotient, '+'+str(quotient))
+                else:
+                    exp_brackets = exp_brackets.replace(exp_quotient, str(quotient))
+
+            elif '//' in digits:
+                dividendw = float(symbols[digits.index("//")])
+                divisorw = float(symbols[digits.index("//") + 1])
+                quotientw = wholepart(dividendw, divisorw)
+                print quotientw
+                exp_quotientw = "%s//%s" % (symbols[digits.index("//")], symbols[digits.index("//") + 1])
+                if ((dividendw < 0) & (divisorw < 0)):
+                    exp_brackets = exp_brackets.replace(exp_quotientw, '+' + str(quotientw))
+                else:
+                    exp_brackets = exp_brackets.replace(exp_quotientw, str(quotientw))
+            elif '%' in digits:
+                dividendp = float(symbols[digits.index("%")])
+                divisorp = float(symbols[digits.index("%") + 1])
+                quotientp = fraction(dividendp, divisorp)
+                print quotientp
+                exp_quotientp = "{0}%{1}".format(symbols[digits.index("%")], symbols[digits.index("%") + 1])
+                if ((dividendp < 0) & (divisorp < 0)):
+                    exp_brackets = exp_brackets.replace(exp_quotientp, '+' + str(quotientp))
+                else:
+                    exp_brackets = exp_brackets.replace(exp_quotientp, str(quotientp))
+            elif '^' in digits:
+                factor1d = float(symbols[digits.index("^")])
+                factor2d = float(symbols[digits.index("^") + 1])
+                productd = degree(factor1d, factor2d)
+                print productd
+                exp_productd = "%s^%s" % (symbols[digits.index("^")], symbols[digits.index("^") + 1])
+                if ((factor1d < 0) & (factor2d < 0)):
+                    exp_brackets = exp_brackets.replace(exp_productd, '+' + str(productd))
+                else:
+                    exp_brackets = exp_brackets.replace(exp_productd, str(productd))
+
+
                 print expression
         print exp_brackets
 
@@ -155,4 +207,12 @@ for a in range(len(list_expr)):
     file_result = open('result.txt','ab')
 
     file_result.writelines(str.strip(list_expr[a])+'='+str(expression)+'\n')
+
     file_result.close()
+
+    data[0][list_expr[a]]=expression
+    print data
+    jsonData = json.dumps(data)
+
+with open ('JSONData.json' , 'w') as f:
+    json.dump(jsonData,f)
